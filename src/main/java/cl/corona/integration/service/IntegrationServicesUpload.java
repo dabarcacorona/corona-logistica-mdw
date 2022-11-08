@@ -1,52 +1,44 @@
 package cl.corona.integration.service;
 
-
 import com.jcraft.jsch.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Vector;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-@Service
-public class IntegrationServices {
-
-    @Value("${sftp.ip}")
+public class IntegrationServicesUpload {
+    @Value("${sftp2.ip}")
     private String sftpip;
 
-    @Value("${sftp.prt}")
+    @Value("${sftp2.prt}")
     private int sftpprt;
 
-    @Value("${sftp.usr}")
+    @Value("${sftp2.usr}")
     private String sftpusr;
 
-    @Value("${sftp.pss}")
+    @Value("${sftp2.pss}")
     private String sftppss;
 
-    @Value("${sftp.org}")
+    @Value("${sftp2.org}")
     private String sftporg;
 
-    @Value("${sftp.dst}")
+    @Value("${sftp2.dst}")
     private String sftpdtn;
 
-    @Value("${sftp.file}")
+    @Value("${sftp2.file}")
     private String namefile;
 
     @Value("${separador.carpetas}")
     private String separador;
 
     private static final Logger LOG = LoggerFactory.getLogger(IntegrationServices.class);
-    String strDir = System.getProperty("user.dir");
+    String strDir = System.getProperty("user.dir2");
 
-    public void DownloadFile() throws IOException {
+    public void UploadFile() throws IOException {
 
         JSch jsch = new JSch();
         try {
@@ -60,29 +52,22 @@ public class IntegrationServices {
             ChannelSftp sftp = (ChannelSftp) channel;
             sftp.connect();
 
-            //final String LocalFile = "mtcsdirplord_20221026021027.zip";
+            final String pathOrigen = strDir + separador + sftpdtn + separador;
 
-            final String path = strDir + separador + sftpdtn + separador;
-
-            //sftp.cd(sftporg);
-            //sftp.get(LocalFile, path);
-
-            //sftp.exit();
-
-            Vector<ChannelSftp.LsEntry> entries = sftp.ls(sftporg);
+            Vector<ChannelSftp.LsEntry> outputs = sftp.ls(pathOrigen);
 
             //download all files (except the ., .. and folders) from given folder
-            for (ChannelSftp.LsEntry en : entries) {
-                if (en.getFilename().equals(".") || en.getFilename().equals("..") || en.getAttrs().isDir()) {
+            for (ChannelSftp.LsEntry sal : outputs) {
+                if (sal.getFilename().equals(".") || sal.getFilename().equals("..") || sal.getAttrs().isDir()) {
                     continue;
                 }
 
-                String filename = StringUtils.getFilename(en.getFilename());
+                String filename = StringUtils.getFilename(sal.getFilename());
                 String sSubCadena = filename.substring(0,9).toUpperCase();
 
                 if (sSubCadena.equals("SDIRTVDTE")) {
-                    LOG.info("Downloading " + (sftporg + en.getFilename()) + " ----> " + path + en.getFilename());
-                    sftp.get(sftporg + en.getFilename(), path + File.separator + en.getFilename());
+                    LOG.info("Uploading " + (sftporg + sal.getFilename()) + " ----> " + sftpdtn + sal.getFilename());
+                    sftp.put(pathOrigen + sal.getFilename(), sftpdtn + File.separator + sal.getFilename());
                 }
             }
 
